@@ -7,12 +7,15 @@
     "json2bin": "deno run --allow-all src/cli.ts json2bin",
     "bin2json": "deno run --allow-all src/cli.ts bin2json",
     "test": "deno test --allow-all",
-    "test:comprehensive": "deno run --allow-all test/comprehensiveTest.ts"
+    "test:comprehensive": "deno run --allow-all test/jsonAutomergeConverter.test.ts"
   },
   "imports": {
     "@automerge/automerge": "npm:@automerge/automerge@^3.1.1",
     "@automerge/automerge-repo": "npm:@automerge/automerge-repo@^2.2.0",
-    "@std/assert": "jsr:@std/assert@1"
+    "@std/assert": "jsr:@std/assert@1",
+    "@jsonAutomergeConverter": "./src/jsonAutomergeConverter.ts",
+    "@testFixtures": "./test/fixtures/testData.ts",
+    "@testUtils": "./test/fixtures/testUtils.ts"
   },
   "nodeModulesDir": "auto",
   "compilerOptions": {

@@ -1,3 +1,12 @@
+/**
+ * Core API tests for JSON ↔ Automerge conversion
+ */
+
+import {
+  assertEquals,
+  assertRejects,
+  assertThrows,
+} from "@std/assert";
 import {
   automergeToJson,
   jsonToAutomerge,
@@ -5,301 +14,202 @@ import {
   testRepoCompatibility,
   validateAutomergeBinary,
   writeJsonAsAutomerge,
-} from "../src/jsonAutomergeConverter.ts";
-import {
-  assertEquals,
-  assertRejects,
-  assertThrows,
-} from "https://deno.land/std@0.208.0/assert/mod.ts";
+} from "@jsonAutomergeConverter";
 
-Deno.test("API functions - JSON to binary to JSON roundtrip", () => {
-  const testData = {
-    string: "hello",
-    number: 42,
-    boolean: true,
-    nullValue: null,
-    array: [1, 2, 3, "test"],
-    nested: {
-      deep: {
-        value: "nested data",
-      },
+// Test fixtures
+const SIMPLE_DATA = {
+  string: "hello",
+  number: 42,
+  boolean: true,
+  nullValue: null,
+};
+
+const COMPLEX_DATA = {
+  users: [
+    { id: 1, name: "Alice", active: true },
+    { id: 2, name: "Bob", active: false },
+  ],
+  metadata: {
+    created: "2025-08-29T00:00:00.000Z",
+    version: "1.0.0",
+    config: {
+      debug: true,
+      maxRetries: 3,
+      endpoints: ["api.example.com", "backup.example.com"],
     },
-  };
-
-  const binary = jsonToAutomerge(testData);
-  const restored = automergeToJson(binary);
-
-  assertEquals(restored, testData);
-  assertEquals(typeof binary.length, "number");
-});
-
-Deno.test("File operations - write and read Automerge files", async () => {
-  const testData = {
-    string: "hello",
-    number: 42,
-    boolean: true,
-    nullValue: null,
-    array: [1, 2, 3, "test"],
-    nested: {
-      deep: {
-        value: "nested data",
-      },
-    },
-  };
-
-  const testFile = "scratch/test.automerge";
-
-  // Ensure scratch directory exists
-  try {
-    await Deno.mkdir("scratch");
-  } catch {
-    // Directory already exists, ignore
-  }
-
-  await writeJsonAsAutomerge(testData, testFile);
-  const restored = await readAutomergeAsJson(testFile);
-
-  assertEquals(restored, testData);
-
-  // Cleanup
-  try {
-    await Deno.remove(testFile);
-  } catch {
-    // File might not exist, ignore
-  }
-});
-
-Deno.test({
-  name: "Repo compatibility - generated binary is repo compatible",
-  fn: async () => {
-    const testData = {
-      string: "hello",
-      number: 42,
-      boolean: true,
-    };
-
-    const binary = jsonToAutomerge(testData);
-    const isCompatible = await testRepoCompatibility(binary);
-
-    assertEquals(isCompatible, true);
   },
-  ignore: true,
-});
+  stats: {
+    totalUsers: 2,
+    activeUsers: 1,
+    conversionRate: 0.5,
+  },
+};
 
-Deno.test("Binary format validation - can be loaded by Automerge", () => {
-  const testData = {
-    string: "hello",
-    number: 42,
-    boolean: true,
-  };
+const UNICODE_DATA = {
+  emoji: "🚀✨🎉",
+  chinese: "你好世界",
+  arabic: "مرحبا بالعالم",
+  special: "Special chars: !@#$%^&*()[]{}|\\:;\"'<>?,./",
+  newlines: "Line 1\nLine 2\r\nLine 3",
+  tabs: "Col1\tCol2\tCol3",
+};
 
-  const binary = jsonToAutomerge(testData);
-
-  // Test that the binary is valid by attempting to load it directly with Automerge
-  // This avoids the repo timer leak issue while still validating the format
-  const restored = automergeToJson(binary);
-  assertEquals(restored, testData);
-
-  // Ensure it's actually a Uint8Array with reasonable size
-  assertEquals(binary instanceof Uint8Array, true);
-  assertEquals(binary.length > 0, true);
-});
-
-Deno.test("Complex nested data - preserves structure", () => {
-  const complexData = {
-    users: [
-      { id: 1, name: "Alice", active: true },
-      { id: 2, name: "Bob", active: false },
-    ],
-    metadata: {
-      created: new Date().toISOString(),
-      version: "1.0.0",
-      config: {
-        debug: true,
-        maxRetries: 3,
-        endpoints: ["api.example.com", "backup.example.com"],
-      },
-    },
-    stats: {
-      totalUsers: 2,
-      activeUsers: 1,
-      conversionRate: 0.5,
-    },
-  };
-
-  const binary = jsonToAutomerge(complexData, { validateJson: true });
-  const restored = automergeToJson(binary);
-
-  assertEquals(restored, complexData);
-  assertEquals(typeof binary.length, "number");
-});
-
-Deno.test("Error handling - invalid binary throws error", () => {
-  const invalidBinary = new Uint8Array([1, 2, 3, 4, 5]);
-
-  assertThrows(() => {
-    automergeToJson(invalidBinary);
-  });
-});
-
-Deno.test("Validation - invalid JSON with Date objects throws error", () => {
-  const invalidData = { date: new Date() }; // Date objects not allowed
-
-  assertThrows(() => {
-    jsonToAutomerge(invalidData, { validateJson: true });
-  });
-});
-
-// Additional comprehensive tests
-
-Deno.test("Binary validation - validateAutomergeBinary works correctly", () => {
-  const testData = { test: "data", number: 123 };
-  const binary = jsonToAutomerge(testData);
-
-  // Valid binary should return true
-  assertEquals(validateAutomergeBinary(binary), true);
-
-  // Invalid binary should return false
-  const invalidBinary = new Uint8Array([1, 2, 3, 4, 5]);
-  assertEquals(validateAutomergeBinary(invalidBinary), false);
-});
-
-Deno.test("Edge cases - empty objects and arrays", () => {
-  const emptyObject = {};
-  const testWithArray = { items: [] }; // Wrap array in object
-
-  const binaryObject = jsonToAutomerge(emptyObject);
-  const binaryWithArray = jsonToAutomerge(testWithArray);
-
-  const restoredObject = automergeToJson(binaryObject);
-  const restoredWithArray = automergeToJson(binaryWithArray);
-
-  assertEquals(restoredObject, emptyObject);
-  assertEquals(restoredWithArray, testWithArray);
-});
-
-Deno.test("Edge cases - null and primitive values in objects", () => {
-  const testCases = [
-    { value: null },
-    { value: "simple string" },
-    { value: 42 },
-    { value: true },
-    { value: false },
-  ];
-
-  for (const testCase of testCases) {
-    const binary = jsonToAutomerge(testCase);
+Deno.test("JSON to Automerge conversion", async (t) => {
+  await t.step("converts simple data correctly", () => {
+    const binary = jsonToAutomerge(SIMPLE_DATA);
     const restored = automergeToJson(binary);
-    assertEquals(restored, testCase);
-  }
+
+    assertEquals(restored, SIMPLE_DATA);
+    assertEquals(binary instanceof Uint8Array, true);
+    assertEquals(binary.length > 0, true);
+  });
+
+  await t.step("converts complex nested data", () => {
+    const binary = jsonToAutomerge(COMPLEX_DATA);
+    const restored = automergeToJson(binary);
+
+    assertEquals(restored, COMPLEX_DATA);
+  });
+
+  await t.step("handles Unicode and special characters", () => {
+    const binary = jsonToAutomerge(UNICODE_DATA);
+    const restored = automergeToJson(binary);
+
+    assertEquals(restored, UNICODE_DATA);
+  });
+
+  await t.step("supports custom actor ID", () => {
+    const customActor =
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const binary = jsonToAutomerge(SIMPLE_DATA, { actor: customActor });
+    const restored = automergeToJson(binary, { actor: customActor });
+
+    assertEquals(restored, SIMPLE_DATA);
+  });
+
+  await t.step("validates JSON when requested", () => {
+    const invalidData = { date: new Date() };
+
+    assertThrows(
+      () => jsonToAutomerge(invalidData, { validateJson: true }),
+      Error,
+      "Invalid JSON object",
+    );
+  });
 });
 
-Deno.test("Conversion options - custom actor ID", () => {
-  const testData = { message: "test with custom actor" };
-  const customActor =
-    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"; // Valid hex string (64 chars)
+Deno.test("Automerge to JSON conversion", async (t) => {
+  await t.step("handles valid binary data", () => {
+    const binary = jsonToAutomerge(SIMPLE_DATA);
+    const result = automergeToJson(binary);
 
-  const binary = jsonToAutomerge(testData, { actor: customActor });
-  const restored = automergeToJson(binary, { actor: customActor });
+    assertEquals(result, SIMPLE_DATA);
+  });
 
-  assertEquals(restored, testData);
+  await t.step("throws on invalid binary data", () => {
+    const invalidBinary = new Uint8Array([1, 2, 3, 4, 5]);
+
+    assertThrows(() => automergeToJson(invalidBinary));
+  });
 });
 
-Deno.test("Large data structures - arrays with many elements", () => {
-  const largeData = {
-    items: Array.from({ length: 100 }, (_, i) => ({ // Reduced size to avoid timeout
-      id: i,
-      name: `Item ${i}`,
-      active: i % 2 === 0,
-    })),
-  };
+Deno.test("Binary validation", async (t) => {
+  await t.step("validates correct Automerge binary", () => {
+    const binary = jsonToAutomerge(SIMPLE_DATA);
+    const isValid = validateAutomergeBinary(binary);
 
-  const binary = jsonToAutomerge(largeData);
-  const restored = automergeToJson(binary);
+    assertEquals(isValid, true);
+  });
 
-  assertEquals(restored, largeData);
-  assertEquals(binary.length > 1000, true); // Should be a substantial binary
+  await t.step("rejects invalid binary data", () => {
+    const invalidBinary = new Uint8Array([1, 2, 3, 4, 5]);
+    const isValid = validateAutomergeBinary(invalidBinary);
+
+    assertEquals(isValid, false);
+  });
+
+  await t.step("handles empty binary", () => {
+    const emptyBinary = new Uint8Array();
+    const isValid = validateAutomergeBinary(emptyBinary);
+
+    assertEquals(isValid, false);
+  });
 });
 
-Deno.test("Deep nesting - nested objects and arrays", () => {
-  const deeplyNested = {
-    level1: {
-      level2: {
-        level3: {
-          level4: {
-            level5: {
-              data: "deep value",
-              array: [1, 2, { nested: "in array" }],
+Deno.test("Edge cases and data types", async (t) => {
+  await t.step("handles empty objects and arrays", () => {
+    const emptyObject = {};
+    const arrayWrapper = { items: [] };
+
+    const binaryObject = jsonToAutomerge(emptyObject);
+    const binaryArray = jsonToAutomerge(arrayWrapper);
+
+    assertEquals(automergeToJson(binaryObject), emptyObject);
+    assertEquals(automergeToJson(binaryArray), arrayWrapper);
+  });
+
+  await t.step("handles primitive values in objects", () => {
+    const testCases = [
+      { value: null },
+      { value: "string" },
+      { value: 42 },
+      { value: true },
+      { value: false },
+    ];
+
+    for (const testCase of testCases) {
+      const binary = jsonToAutomerge(testCase);
+      const restored = automergeToJson(binary);
+      assertEquals(restored, testCase);
+    }
+  });
+
+  await t.step("handles deeply nested structures", () => {
+    const deeplyNested = {
+      level1: {
+        level2: {
+          level3: {
+            level4: {
+              level5: {
+                data: "deep value",
+                array: [1, 2, { nested: "in array" }],
+              },
             },
           },
         },
       },
-    },
-  };
+    };
 
-  const binary = jsonToAutomerge(deeplyNested);
-  const restored = automergeToJson(binary);
+    const binary = jsonToAutomerge(deeplyNested);
+    const restored = automergeToJson(binary);
 
-  assertEquals(restored, deeplyNested);
-});
-
-Deno.test("Special characters and Unicode", () => {
-  const unicodeData = {
-    emoji: "🚀✨🎉",
-    chinese: "你好世界",
-    arabic: "مرحبا بالعالم",
-    special: "Special chars: !@#$%^&*()[]{}|\\:;\"'<>?,./",
-    newlines: "Line 1\nLine 2\r\nLine 3",
-    tabs: "Col1\tCol2\tCol3",
-  };
-
-  const binary = jsonToAutomerge(unicodeData);
-  const restored = automergeToJson(binary);
-
-  assertEquals(restored, unicodeData);
-});
-
-Deno.test("File operations - multiple write/read cycles", async () => {
-  const testFile = "scratch/multi-test.automerge";
-
-  // Ensure scratch directory exists
-  try {
-    await Deno.mkdir("scratch");
-  } catch {
-    // Directory already exists, ignore
-  }
-
-  const testCases = [
-    { case: 1, data: "first write" },
-    { case: 2, data: [1, 2, 3] },
-    { case: 3, data: { nested: { deep: "value" } } },
-  ];
-
-  for (const testCase of testCases) {
-    await writeJsonAsAutomerge(testCase, testFile);
-    const restored = await readAutomergeAsJson(testFile);
-    assertEquals(restored, testCase);
-  }
-
-  // Cleanup
-  try {
-    await Deno.remove(testFile);
-  } catch {
-    // File might not exist, ignore
-  }
-});
-
-Deno.test("Error handling - file operations with invalid paths", async () => {
-  // Test reading non-existent file
-  await assertRejects(async () => {
-    await readAutomergeAsJson("/nonexistent/path/file.automerge");
+    assertEquals(restored, deeplyNested);
   });
 
-  // Test writing to invalid path (should fail)
-  await assertRejects(async () => {
-    await writeJsonAsAutomerge(
-      { test: "data" },
-      "/nonexistent/path/file.automerge",
-    );
+  await t.step("handles large data structures", () => {
+    const largeData = {
+      items: Array.from({ length: 100 }, (_, i) => ({
+        id: i,
+        name: `Item ${i}`,
+        active: i % 2 === 0,
+      })),
+    };
+
+    const binary = jsonToAutomerge(largeData);
+    const restored = automergeToJson(binary);
+
+    assertEquals(restored, largeData);
+    assertEquals(binary.length > 1000, true);
   });
+});
+
+Deno.test({
+  name: "Repository compatibility",
+  ignore: true, // Automerge-repo has timer leaks in Deno tests
+  fn: async () => {
+    const binary = jsonToAutomerge(SIMPLE_DATA);
+    const isCompatible = await testRepoCompatibility(binary);
+
+    assertEquals(isCompatible, true);
+  },
 });

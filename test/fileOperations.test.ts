@@ -6,7 +6,7 @@ import { assertEquals, assertRejects } from "@std/assert";
 import {
   readAutomergeAsJson,
   writeJsonAsAutomerge,
-} from "./jsonAutomergeConverter.ts";
+} from "@jsonAutomergeConverter";
 
 const TEST_DATA = {
   document: "test file operations",

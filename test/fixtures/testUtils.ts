@@ -7,7 +7,7 @@ import {
   automergeToJson,
   type ConversionOptions,
   jsonToAutomerge,
-} from "../../src/jsonAutomergeConverter.ts";
+} from "@jsonAutomergeConverter";
 
 /**
  * Test roundtrip conversion (JSON → Binary → JSON)

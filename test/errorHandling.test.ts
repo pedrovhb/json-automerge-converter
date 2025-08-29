@@ -9,13 +9,13 @@ import {
   readAutomergeAsJson,
   validateAutomergeBinary,
   writeJsonAsAutomerge,
-} from "../src/jsonAutomergeConverter.ts";
+} from "@jsonAutomergeConverter";
 import {
   EMPTY_BINARY,
   INVALID_BINARIES,
   TEST_FIXTURES,
-} from "./fixtures/test_data.ts";
-import { cleanupTempDir, createTempTestDir } from "./fixtures/test_utils.ts";
+} from "@testFixtures";
+import { cleanupTempDir, createTempTestDir } from "@testUtils";
 
 Deno.test("JSON validation errors", async (t) => {
   await t.step("rejects Date objects when validation enabled", () => {
