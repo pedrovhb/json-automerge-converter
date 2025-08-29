@@ -4,11 +4,11 @@
  * CLI tool for converting between JSON and Automerge binary format
  */
 
-import { 
-  jsonToAutomerge, 
+import {
+  type ConversionOptions,
+  jsonToAutomerge,
   readAutomergeAsJson,
   testRepoCompatibility,
-  type ConversionOptions 
 } from "./jsonAutomergeConverter.ts";
 
 interface CliOptions {
@@ -62,10 +62,10 @@ EXAMPLES:
 function parseArgs(args: string[]): { command: string; options: CliOptions } {
   const options: CliOptions = {};
   let command = "";
-  
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === "-h" || arg === "--help") {
       options.help = true;
     } else if (arg === "-i" || arg === "--input") {
@@ -82,43 +82,48 @@ function parseArgs(args: string[]): { command: string; options: CliOptions } {
       command = arg;
     }
   }
-  
+
   return { command, options };
 }
 
 async function readStdin(): Promise<string> {
   const decoder = new TextDecoder();
   const chunks: Uint8Array[] = [];
-  
+
   for await (const chunk of Deno.stdin.readable) {
     chunks.push(chunk);
   }
-  
-  const combined = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+
+  const combined = new Uint8Array(
+    chunks.reduce((acc, chunk) => acc + chunk.length, 0),
+  );
   let offset = 0;
   for (const chunk of chunks) {
     combined.set(chunk, offset);
     offset += chunk.length;
   }
-  
+
   return decoder.decode(combined);
 }
 
 async function json2bin(options: CliOptions): Promise<void> {
   const conversionOptions: ConversionOptions = {
     actor: options.actor,
-    validateJson: options.validate
+    validateJson: options.validate,
   };
 
   let jsonData: unknown;
-  
+
   if (options.input) {
     // Read from file
     const jsonText = await Deno.readTextFile(options.input);
     try {
       jsonData = JSON.parse(jsonText);
     } catch (error) {
-      console.error("Error parsing JSON file:", error instanceof Error ? error.message : String(error));
+      console.error(
+        "Error parsing JSON file:",
+        error instanceof Error ? error.message : String(error),
+      );
       Deno.exit(1);
     }
   } else {
@@ -127,30 +132,39 @@ async function json2bin(options: CliOptions): Promise<void> {
     try {
       jsonData = JSON.parse(jsonText);
     } catch (error) {
-      console.error("Error parsing JSON from stdin:", error instanceof Error ? error.message : String(error));
+      console.error(
+        "Error parsing JSON from stdin:",
+        error instanceof Error ? error.message : String(error),
+      );
       Deno.exit(1);
     }
   }
 
   try {
     const binary = jsonToAutomerge(jsonData, conversionOptions);
-    
+
     if (options.output) {
       await Deno.writeFile(options.output, binary);
-      console.error(`✓ Converted JSON to Automerge binary (${binary.length} bytes) -> ${options.output}`);
+      console.error(
+        `✓ Converted JSON to Automerge binary (${binary.length} bytes) -> ${options.output}`,
+      );
     } else {
       // Write binary to stdout
       await Deno.stdout.write(binary);
     }
-    
+
     // Test repo compatibility if requested
     if (options.test) {
       const compatible = await testRepoCompatibility(binary);
-      console.error(`✓ Repo compatibility test: ${compatible ? "PASS" : "FAIL"}`);
+      console.error(
+        `✓ Repo compatibility test: ${compatible ? "PASS" : "FAIL"}`,
+      );
     }
-    
   } catch (error) {
-    console.error("Error during conversion:", error instanceof Error ? error.message : String(error));
+    console.error(
+      "Error during conversion:",
+      error instanceof Error ? error.message : String(error),
+    );
     Deno.exit(1);
   }
 }
@@ -162,23 +176,30 @@ async function bin2json(options: CliOptions): Promise<void> {
   }
 
   const conversionOptions: ConversionOptions = {
-    actor: options.actor
+    actor: options.actor,
   };
 
   try {
-    const jsonData = await readAutomergeAsJson(options.input, conversionOptions);
+    const jsonData = await readAutomergeAsJson(
+      options.input,
+      conversionOptions,
+    );
     const jsonText = JSON.stringify(jsonData, null, 2);
-    
+
     if (options.output) {
       await Deno.writeTextFile(options.output, jsonText);
-      console.error(`✓ Converted Automerge binary to JSON -> ${options.output}`);
+      console.error(
+        `✓ Converted Automerge binary to JSON -> ${options.output}`,
+      );
     } else {
       // Write to stdout
       console.log(jsonText);
     }
-    
   } catch (error) {
-    console.error("Error during conversion:", error instanceof Error ? error.message : String(error));
+    console.error(
+      "Error during conversion:",
+      error instanceof Error ? error.message : String(error),
+    );
     Deno.exit(1);
   }
 }

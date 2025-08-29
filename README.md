@@ -1,15 +1,17 @@
 # JSON ↔ Automerge Binary Converter
 
-A TypeScript/Deno library and CLI tool for converting between JSON objects and Automerge binary format, enabling seamless integration with `automerge-repo` collaborative document systems.
+A TypeScript/Deno library and CLI tool for converting between JSON objects and
+Automerge binary format, enabling seamless integration with `automerge-repo`
+collaborative document systems.
 
 ## Features
 
-✅ **Bidirectional conversion** - JSON ↔ Automerge binary  
-✅ **Repo compatibility** - Generated binaries work with `repo.import()`  
-✅ **File & stdin/stdout support** - Flexible input/output options  
-✅ **Validation** - Optional JSON validation before conversion  
-✅ **Error handling** - Proper error messages and exit codes  
-✅ **Type safety** - Full TypeScript support with strict typing  
+✅ **Bidirectional conversion** - JSON ↔ Automerge binary\
+✅ **Repo compatibility** - Generated binaries work with `repo.import()`\
+✅ **File & stdin/stdout support** - Flexible input/output options\
+✅ **Validation** - Optional JSON validation before conversion\
+✅ **Error handling** - Proper error messages and exit codes\
+✅ **Type safety** - Full TypeScript support with strict typing\
 ✅ **Zero config** - Works out of the box with sensible defaults
 
 ## Installation
@@ -47,7 +49,7 @@ deno run -A src/cli.ts --help
 #### CLI Options
 
 - `-i, --input <FILE>` - Input file path (stdin for json2bin if not provided)
-- `-o, --output <FILE>` - Output file path (stdout for bin2json if not provided)  
+- `-o, --output <FILE>` - Output file path (stdout for bin2json if not provided)
 - `-a, --actor <ID>` - Actor ID for the automerge document
 - `-v, --validate` - Validate JSON before conversion
 - `-t, --test` - Test repo compatibility after conversion
@@ -57,11 +59,11 @@ deno run -A src/cli.ts --help
 
 ```typescript
 import {
-  jsonToAutomerge,
   automergeToJson,
-  writeJsonAsAutomerge, 
+  jsonToAutomerge,
   readAutomergeAsJson,
-  testRepoCompatibility
+  testRepoCompatibility,
+  writeJsonAsAutomerge,
 } from "./src/index.ts";
 
 // Convert JSON to Automerge binary
@@ -87,7 +89,7 @@ console.log("Repo compatible:", isCompatible); // true
 import { Repo } from "@automerge/automerge-repo";
 import { jsonToRepoCompatible } from "./src/index.ts";
 
-const repo = new Repo({ /* your config */ });
+const repo = new Repo({/* your config */});
 
 // Convert JSON and import to repo
 const json = { users: [{ name: "Alice" }, { name: "Bob" }] };
@@ -104,6 +106,7 @@ console.log("Document content:", handle.doc());
 ### Core Functions
 
 #### `jsonToAutomerge(json, options?)`
+
 Convert JSON object to Automerge binary format.
 
 - **json**: `unknown` - The JSON object to convert
@@ -111,6 +114,7 @@ Convert JSON object to Automerge binary format.
 - **Returns**: `Uint8Array` - Automerge binary representation
 
 #### `automergeToJson(binary, options?)`
+
 Convert Automerge binary format to JSON object.
 
 - **binary**: `Uint8Array` - The Automerge binary data
@@ -118,19 +122,22 @@ Convert Automerge binary format to JSON object.
 - **Returns**: `unknown` - The JSON object representation
 
 #### `writeJsonAsAutomerge(json, filePath, options?)`
+
 Write JSON object directly to Automerge binary file.
 
 #### `readAutomergeAsJson(filePath, options?)`
+
 Read Automerge binary file and convert to JSON.
 
 #### `testRepoCompatibility(binary)`
+
 Test if binary data can be successfully imported by automerge-repo.
 
 ### Options
 
 ```typescript
 interface ConversionOptions {
-  actor?: string;        // Actor ID for the document
+  actor?: string; // Actor ID for the document
   validateJson?: boolean; // Validate JSON before conversion
 }
 ```
@@ -164,16 +171,19 @@ deno task bin2json -i test.automerge
 ## Technical Details
 
 ### Binary Format
+
 - Uses Automerge's native binary format via `A.save()` and `A.load()`
 - Fully compatible with `repo.import()` and `repo.export()`
 - Efficient CRDT encoding preserves document structure and history
 
 ### Validation
+
 - Optional JSON validation ensures only serializable data
 - Rejects non-plain objects (Date, RegExp, functions, etc.)
 - Supports nested objects and arrays with proper type checking
 
 ### Error Handling
+
 - Clear error messages for invalid JSON or binary data
 - Graceful handling of file I/O errors
 - Proper exit codes for CLI usage

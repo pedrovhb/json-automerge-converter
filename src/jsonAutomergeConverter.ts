@@ -18,7 +18,10 @@ export interface ConversionOptions {
  * @param options - Optional conversion settings
  * @returns Uint8Array containing the Automerge binary representation
  */
-export function jsonToAutomerge(json: unknown, options: ConversionOptions = {}): Uint8Array {
+export function jsonToAutomerge(
+  json: unknown,
+  options: ConversionOptions = {},
+): Uint8Array {
   if (options.validateJson && !isValidJsonObject(json)) {
     throw new Error("Invalid JSON object: must be a plain object or array");
   }
@@ -30,10 +33,18 @@ export function jsonToAutomerge(json: unknown, options: ConversionOptions = {}):
 /**
  * Convert Automerge binary format to JSON object
  * @param binary - The Automerge binary data
- * @param options - Optional conversion settings  
+ * @param options - Optional conversion settings
  * @returns The JSON object representation
  */
-export function automergeToJson(binary: Uint8Array, options: ConversionOptions = {}): unknown {
+export function automergeToJson(
+  binary: Uint8Array,
+  options: ConversionOptions = {},
+): unknown {
+  // Reject empty binary
+  if (binary.length === 0) {
+    throw new Error("Empty binary data is not valid Automerge format");
+  }
+
   const doc = A.load(binary, options.actor);
   return doc;
 }
@@ -45,9 +56,9 @@ export function automergeToJson(binary: Uint8Array, options: ConversionOptions =
  * @param options - Optional conversion settings
  */
 export async function writeJsonAsAutomerge(
-  json: unknown, 
-  filePath: string, 
-  options: ConversionOptions = {}
+  json: unknown,
+  filePath: string,
+  options: ConversionOptions = {},
 ): Promise<void> {
   const binary = jsonToAutomerge(json, options);
   await Deno.writeFile(filePath, binary);
@@ -60,8 +71,8 @@ export async function writeJsonAsAutomerge(
  * @returns The JSON object representation
  */
 export async function readAutomergeAsJson(
-  filePath: string, 
-  options: ConversionOptions = {}
+  filePath: string,
+  options: ConversionOptions = {},
 ): Promise<unknown> {
   const binary = await Deno.readFile(filePath);
   return automergeToJson(binary, options);
@@ -73,7 +84,10 @@ export async function readAutomergeAsJson(
  * @param options - Optional conversion settings
  * @returns Uint8Array that can be used with repo.import()
  */
-export function jsonToRepoCompatible(json: unknown, options: ConversionOptions = {}): Uint8Array {
+export function jsonToRepoCompatible(
+  json: unknown,
+  options: ConversionOptions = {},
+): Uint8Array {
   // repo.import() expects the same format as A.save() produces
   return jsonToAutomerge(json, options);
 }
@@ -84,6 +98,11 @@ export function jsonToRepoCompatible(json: unknown, options: ConversionOptions =
  * @returns boolean indicating if binary is valid Automerge format
  */
 export function validateAutomergeBinary(binary: Uint8Array): boolean {
+  // Empty binary should be considered invalid
+  if (binary.length === 0) {
+    return false;
+  }
+
   try {
     // Try to load the binary with Automerge directly
     // This validates the format without creating timers
@@ -101,28 +120,30 @@ export function validateAutomergeBinary(binary: Uint8Array): boolean {
  * @param binary - The binary data to test
  * @returns Promise<boolean> indicating if import was successful
  */
-export async function testRepoCompatibility(binary: Uint8Array): Promise<boolean> {
+export async function testRepoCompatibility(
+  binary: Uint8Array,
+): Promise<boolean> {
   let repo: Repo | null = null;
   let handle = null;
   try {
-    repo = new Repo({ 
+    repo = new Repo({
       storage: undefined,
-      network: []
+      network: [],
     });
-    
+
     handle = repo.import(binary);
     const result = handle.isReady();
-    
+
     // Try to unload the handle immediately
-    if (handle && typeof handle.unload === 'function') {
+    if (handle && typeof handle.unload === "function") {
       handle.unload();
     }
-    
+
     return result;
   } catch {
     return false;
   } finally {
-    if (handle && typeof handle.unload === 'function') {
+    if (handle && typeof handle.unload === "function") {
       try {
         handle.unload();
       } catch {
@@ -143,26 +164,30 @@ export async function testRepoCompatibility(binary: Uint8Array): Promise<boolean
  * Validate that a value is a valid JSON object/array
  */
 function isValidJsonObject(value: unknown): boolean {
-  if (value === null || value === undefined) {
+  // undefined is not valid JSON, but null is valid
+  if (value === undefined) {
     return false;
   }
-  
-  if (typeof value === "boolean" || typeof value === "number" || typeof value === "string") {
+
+  if (
+    value === null || typeof value === "boolean" || typeof value === "number" ||
+    typeof value === "string"
+  ) {
     return true;
   }
-  
+
   if (Array.isArray(value)) {
-    return value.every(item => isValidJsonObject(item));
+    return value.every((item) => isValidJsonObject(item));
   }
-  
+
   if (typeof value === "object") {
     // Check if it's a plain object (not Date, RegExp, etc.)
     if (value.constructor !== Object && value.constructor !== undefined) {
       return false;
     }
-    
-    return Object.values(value).every(val => isValidJsonObject(val));
+
+    return Object.values(value).every((val) => isValidJsonObject(val));
   }
-  
+
   return false;
 }

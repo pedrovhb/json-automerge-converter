@@ -1,7 +1,7 @@
 /**
  * JSON ↔ Automerge Binary Converter
  *
- * This package provides utilities for converting between JSON objects and 
+ * This package provides utilities for converting between JSON objects and
  * Automerge binary format, enabling seamless integration with automerge-repo
  * collaborative document systems.
  *
@@ -9,11 +9,11 @@
  */
 
 export {
-  jsonToAutomerge,
   automergeToJson,
-  writeJsonAsAutomerge,
-  readAutomergeAsJson,
+  type ConversionOptions,
+  jsonToAutomerge,
   jsonToRepoCompatible,
+  readAutomergeAsJson,
   testRepoCompatibility,
-  type ConversionOptions
+  writeJsonAsAutomerge,
 } from "./jsonAutomergeConverter.ts";
