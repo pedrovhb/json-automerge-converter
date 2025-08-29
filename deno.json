@@ -1,0 +1,26 @@
+{
+  "name": "@pedro/json-automerge-converter",
+  "version": "0.1.0",
+  "exports": "./src/index.ts",
+  "tasks": {
+    "dev": "deno run --allow-all --watch src/cli.ts",
+    "json2bin": "deno run --allow-all src/cli.ts json2bin",
+    "bin2json": "deno run --allow-all src/cli.ts bin2json",
+    "test": "deno test --allow-all",
+    "test:comprehensive": "deno run --allow-all test/comprehensiveTest.ts"
+  },
+  "imports": {
+    "@automerge/automerge": "npm:@automerge/automerge@^3.1.1",
+    "@automerge/automerge-repo": "npm:@automerge/automerge-repo@^2.2.0",
+    "@std/assert": "jsr:@std/assert@1"
+  },
+  "nodeModulesDir": "auto",
+  "compilerOptions": {
+    "strict": true,
+    "lib": ["deno.window", "dom"]
+  },
+  "exclude": [
+    "node_modules/",
+    "scratch/"
+  ]
+}

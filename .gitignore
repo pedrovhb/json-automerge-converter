@@ -1,0 +1,38 @@
+# Deno
+node_modules/
+npm-debug.log*
+
+# Runtime
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scratch/temp files
+scratch/
+temp/
+*.tmp
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+
+# Test outputs
+coverage/
+.nyc_output/
+
+# Automerge files (for testing)
+*.automerge
