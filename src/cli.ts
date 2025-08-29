@@ -5,9 +5,9 @@
  */
 
 import {
+  automergeToJson,
   type ConversionOptions,
   jsonToAutomerge,
-  readAutomergeAsJson,
   testRepoCompatibility,
 } from "./jsonAutomergeConverter.ts";
 
@@ -69,9 +69,11 @@ function parseArgs(args: string[]): { command: string; options: CliOptions } {
     if (arg === "-h" || arg === "--help") {
       options.help = true;
     } else if (arg === "-i" || arg === "--input") {
-      options.input = args[++i];
+      const inputArg = args[++i];
+      options.input = inputArg === "-" ? undefined : inputArg;
     } else if (arg === "-o" || arg === "--output") {
-      options.output = args[++i];
+      const outputArg = args[++i];
+      options.output = outputArg === "-" ? undefined : outputArg;
     } else if (arg === "-a" || arg === "--actor") {
       options.actor = args[++i];
     } else if (arg === "-v" || arg === "--validate") {
@@ -170,20 +172,35 @@ async function json2bin(options: CliOptions): Promise<void> {
 }
 
 async function bin2json(options: CliOptions): Promise<void> {
-  if (!options.input) {
-    console.error("Error: Input file required for bin2json command");
-    Deno.exit(1);
-  }
-
   const conversionOptions: ConversionOptions = {
     actor: options.actor,
   };
 
   try {
-    const jsonData = await readAutomergeAsJson(
-      options.input,
-      conversionOptions,
-    );
+    let jsonData: unknown;
+
+    if (options.input) {
+      // Read from file
+      const binary = await Deno.readFile(options.input);
+      jsonData = automergeToJson(binary, conversionOptions);
+    } else {
+      // Read binary from stdin
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of Deno.stdin.readable) {
+        chunks.push(chunk);
+      }
+
+      const combined = new Uint8Array(
+        chunks.reduce((acc, chunk) => acc + chunk.length, 0),
+      );
+      let offset = 0;
+      for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      jsonData = automergeToJson(combined, conversionOptions);
+    }
     const jsonText = JSON.stringify(jsonData, null, 2);
 
     if (options.output) {
