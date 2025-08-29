@@ -6,8 +6,6 @@
 
 import { 
   jsonToAutomerge, 
-  automergeToJson, 
-  writeJsonAsAutomerge, 
   readAutomergeAsJson,
   testRepoCompatibility,
   type ConversionOptions 
@@ -120,7 +118,7 @@ async function json2bin(options: CliOptions): Promise<void> {
     try {
       jsonData = JSON.parse(jsonText);
     } catch (error) {
-      console.error("Error parsing JSON file:", error.message);
+      console.error("Error parsing JSON file:", error instanceof Error ? error.message : String(error));
       Deno.exit(1);
     }
   } else {
@@ -129,7 +127,7 @@ async function json2bin(options: CliOptions): Promise<void> {
     try {
       jsonData = JSON.parse(jsonText);
     } catch (error) {
-      console.error("Error parsing JSON from stdin:", error.message);
+      console.error("Error parsing JSON from stdin:", error instanceof Error ? error.message : String(error));
       Deno.exit(1);
     }
   }
@@ -152,7 +150,7 @@ async function json2bin(options: CliOptions): Promise<void> {
     }
     
   } catch (error) {
-    console.error("Error during conversion:", error.message);
+    console.error("Error during conversion:", error instanceof Error ? error.message : String(error));
     Deno.exit(1);
   }
 }
@@ -180,7 +178,7 @@ async function bin2json(options: CliOptions): Promise<void> {
     }
     
   } catch (error) {
-    console.error("Error during conversion:", error.message);
+    console.error("Error during conversion:", error instanceof Error ? error.message : String(error));
     Deno.exit(1);
   }
 }

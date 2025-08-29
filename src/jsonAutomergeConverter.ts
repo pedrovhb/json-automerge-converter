@@ -79,21 +79,63 @@ export function jsonToRepoCompatible(json: unknown, options: ConversionOptions =
 }
 
 /**
+ * Validate that binary data is in proper Automerge format
+ * @param binary - The binary data to validate
+ * @returns boolean indicating if binary is valid Automerge format
+ */
+export function validateAutomergeBinary(binary: Uint8Array): boolean {
+  try {
+    // Try to load the binary with Automerge directly
+    // This validates the format without creating timers
+    const doc = A.load(binary);
+    return doc !== null && doc !== undefined;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Test if a repo can successfully import the binary data
+ * NOTE: This function creates timer leaks in Deno tests due to internal DocHandle throttling
+ * Use validateAutomergeBinary() for format validation without timers
  * @param binary - The binary data to test
  * @returns Promise<boolean> indicating if import was successful
  */
 export async function testRepoCompatibility(binary: Uint8Array): Promise<boolean> {
+  let repo: Repo | null = null;
+  let handle = null;
   try {
-    const repo = new Repo({ 
+    repo = new Repo({ 
       storage: undefined,
       network: []
     });
     
-    const handle = repo.import(binary);
-    return handle.isReady();
+    handle = repo.import(binary);
+    const result = handle.isReady();
+    
+    // Try to unload the handle immediately
+    if (handle && typeof handle.unload === 'function') {
+      handle.unload();
+    }
+    
+    return result;
   } catch {
     return false;
+  } finally {
+    if (handle && typeof handle.unload === 'function') {
+      try {
+        handle.unload();
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    if (repo) {
+      try {
+        await repo.shutdown();
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
   }
 }
 

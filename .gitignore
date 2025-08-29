@@ -36,3 +36,5 @@ coverage/
 
 # Automerge files (for testing)
 *.automerge
+
+external_sources/
