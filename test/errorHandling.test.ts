@@ -223,7 +223,7 @@ Deno.test("Memory and performance edge cases", async (t) => {
   });
 
   await t.step("handles circular references in input", () => {
-    const circular: any = { name: "test" };
+    const circular: Record<string, unknown> = { name: "test" };
     circular.self = circular;
 
     // Automerge should detect circular references and throw
@@ -231,7 +231,7 @@ Deno.test("Memory and performance edge cases", async (t) => {
   });
 
   await t.step("handles deeply nested objects", () => {
-    let deepObject: any = { value: "deep" };
+    let deepObject: Record<string, unknown> = { value: "deep" };
     // Reduce depth to avoid triggering Automerge's internal safety checks
     for (let i = 0; i < 100; i++) {
       deepObject = { level: i, child: deepObject };

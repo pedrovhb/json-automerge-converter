@@ -31,14 +31,14 @@ async function runComprehensiveTests() {
 
   // Convert JSON -> binary -> JSON
   const binary = jsonToAutomerge(testData);
-  const restored = automergeToJson(binary);
+  automergeToJson(binary);
   console.log("   ✓ JSON -> binary -> JSON roundtrip successful");
   console.log(`   ✓ Binary size: ${binary.length} bytes`);
 
   // Test 2: File operations
   console.log("\n2️⃣ Testing file operations");
   await writeJsonAsAutomerge(testData, "scratch/apiTest.automerge");
-  const fileRestored = await readAutomergeAsJson("scratch/apiTest.automerge");
+  await readAutomergeAsJson("scratch/apiTest.automerge");
   console.log("   ✓ File write/read successful");
 
   // Test 3: Repo compatibility
@@ -77,7 +77,7 @@ async function runComprehensiveTests() {
   };
 
   const complexBinary = jsonToAutomerge(complexData, { validateJson: true });
-  const complexRestored = automergeToJson(complexBinary);
+  automergeToJson(complexBinary);
   console.log(`   ✓ Complex data conversion successful`);
   console.log(`   ✓ Binary size: ${complexBinary.length} bytes`);
 
@@ -87,7 +87,7 @@ async function runComprehensiveTests() {
     const invalidBinary = new Uint8Array([1, 2, 3, 4, 5]);
     automergeToJson(invalidBinary);
     console.log("   ❌ Should have thrown error for invalid binary");
-  } catch (error) {
+  } catch (_error) {
     console.log("   ✓ Invalid binary properly rejected");
   }
 
@@ -97,7 +97,7 @@ async function runComprehensiveTests() {
     const invalidData = { date: new Date() }; // Date objects not allowed
     jsonToAutomerge(invalidData, { validateJson: true });
     console.log("   ❌ Should have thrown error for invalid JSON");
-  } catch (error) {
+  } catch (_error) {
     console.log("   ✓ Invalid JSON properly rejected during validation");
   }
 

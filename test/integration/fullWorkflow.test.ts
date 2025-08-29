@@ -145,7 +145,7 @@ Deno.test("Cross-platform compatibility", async (t) => {
     }
   });
 
-  await t.step("preserves data integrity across save/load cycles", async () => {
+  await t.step("preserves data integrity across save/load cycles", () => {
     const testCases = [
       TEST_FIXTURES.simple,
       TEST_FIXTURES.complex,
