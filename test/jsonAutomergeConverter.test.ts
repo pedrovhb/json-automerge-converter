@@ -2,18 +2,14 @@
  * Core API tests for JSON ↔ Automerge conversion
  */
 
-import {
-  assertEquals,
-  assertRejects,
-  assertThrows,
-} from "@std/assert";
+import { assertEquals, type assertRejects, assertThrows } from "@std/assert";
 import {
   automergeToJson,
   jsonToAutomerge,
-  readAutomergeAsJson,
+  type readAutomergeAsJson,
   testRepoCompatibility,
   validateAutomergeBinary,
-  writeJsonAsAutomerge,
+  type writeJsonAsAutomerge,
 } from "@jsonAutomergeConverter";
 
 // Test fixtures

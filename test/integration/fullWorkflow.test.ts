@@ -8,11 +8,7 @@ import {
   writeJsonAsAutomerge,
 } from "@jsonAutomergeConverter";
 import { TEST_FIXTURES, VALID_ACTOR_ID } from "@testFixtures";
-import {
-  cleanupTempDir,
-  createTempTestDir,
-  testRoundtrip,
-} from "@testUtils";
+import { cleanupTempDir, createTempTestDir, testRoundtrip } from "@testUtils";
 
 Deno.test("Complete workflow integration tests", async (t) => {
   await t.step("full JSON to file to JSON workflow", async () => {

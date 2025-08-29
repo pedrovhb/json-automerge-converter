@@ -10,11 +10,7 @@ import {
   validateAutomergeBinary,
   writeJsonAsAutomerge,
 } from "@jsonAutomergeConverter";
-import {
-  EMPTY_BINARY,
-  INVALID_BINARIES,
-  TEST_FIXTURES,
-} from "@testFixtures";
+import { EMPTY_BINARY, INVALID_BINARIES, TEST_FIXTURES } from "@testFixtures";
 import { cleanupTempDir, createTempTestDir } from "@testUtils";
 
 Deno.test("JSON validation errors", async (t) => {
