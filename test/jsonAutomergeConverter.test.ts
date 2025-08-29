@@ -71,7 +71,6 @@ Deno.test("File operations - write and read Automerge files", async () => {
 
 Deno.test({
   name: "Repo compatibility - generated binary is repo compatible",
-  ignore: true, // Automerge-repo has unfixable timer leaks in Deno tests
   fn: async () => {
     const testData = {
       string: "hello",
@@ -84,6 +83,7 @@ Deno.test({
 
     assertEquals(isCompatible, true);
   },
+  ignore: true,
 });
 
 Deno.test("Binary format validation - can be loaded by Automerge", () => {
